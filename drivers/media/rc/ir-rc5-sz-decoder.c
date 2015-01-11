@@ -47,6 +47,7 @@ static int ir_rc5_sz_decode(struct rc_dev *dev, struct ir_raw_event ev)
 	struct rc5_sz_dec *data = &dev->raw->rc5_sz;
 	u8 toggle, command, system;
 	u32 scancode;
+    enum rc_type protocol;
 
 	if (!(dev->enabled_protocols & RC_BIT_RC5_SZ))
 		return 0;
@@ -111,11 +112,12 @@ again:
 		system   = (data->bits & 0x02FC0) >> 6;
 		toggle   = (data->bits & 0x01000) ? 1 : 0;
 		scancode = system << 6 | command;
+        protocol = RC_TYPE_RC5_SZ;
 
 		IR_dprintk(1, "RC5-sz scancode 0x%04x (toggle: %u)\n",
 			   scancode, toggle);
 
-		rc_keydown(dev, scancode, toggle);
+		rc_keydown(dev, protocol, scancode, toggle);
 		data->state = STATE_INACTIVE;
 		return 0;
 	}

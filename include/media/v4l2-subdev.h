@@ -24,6 +24,7 @@
 #include <linux/types.h>
 #include <linux/v4l2-subdev.h>
 #include <media/media-entity.h>
+#include <media/v4l2-async.h>
 #include <media/v4l2-common.h>
 #include <media/v4l2-dev.h>
 #include <media/v4l2-fh.h>
@@ -230,15 +231,18 @@ struct v4l2_subdev_audio_ops {
 
 /* Indicates the @length field specifies maximum data length. */
 #define V4L2_MBUS_FRAME_DESC_FL_LEN_MAX		(1U << 0)
-/* Indicates user defined data format, i.e. non standard frame format. */
+/*
+ * Indicates that the format does not have line offsets, i.e. the
+ * receiver should use 1D DMA.
+ */
 #define V4L2_MBUS_FRAME_DESC_FL_BLOB		(1U << 1)
 
 /**
  * struct v4l2_mbus_frame_desc_entry - media bus frame description structure
  * @flags: V4L2_MBUS_FRAME_DESC_FL_* flags
  * @pixelcode: media bus pixel code, valid if FRAME_DESC_FL_BLOB is not set
- * @length: number of octets per frame, valid for compressed or unspecified
- *          formats
+ * @length: number of octets per frame, valid if V4L2_MBUS_FRAME_DESC_FL_BLOB
+ *	    is set
  */
 struct v4l2_mbus_frame_desc_entry {
 	u16 flags;
@@ -569,6 +573,7 @@ struct v4l2_subdev {
 #endif
 	struct list_head list;
 	struct module *owner;
+	bool owner_v4l2_dev;
 	u32 flags;
 	struct v4l2_device *v4l2_dev;
 	const struct v4l2_subdev_ops *ops;
@@ -585,6 +590,16 @@ struct v4l2_subdev {
 	void *host_priv;
 	/* subdev device node */
 	struct video_device *devnode;
+	/* pointer to the physical device, if any */
+	struct device *dev;
+	/* Links this subdev to a global subdev_list or @notifier->done list. */
+	struct list_head async_list;
+	/* Pointer to respective struct v4l2_async_subdev. */
+	struct v4l2_async_subdev *asd;
+	/* Pointer to the managing notifier. */
+	struct v4l2_async_notifier *notifier;
+	/* common part of subdevice platform data */
+	struct v4l2_subdev_platform_data *pdata;
 };
 
 #define media_entity_to_v4l2_subdev(ent) \

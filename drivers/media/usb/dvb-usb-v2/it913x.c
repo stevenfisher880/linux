@@ -327,7 +327,7 @@ static int it913x_rc_query(struct dvb_usb_device *d)
 		key += ibuf[1] << 8;
 		deb_info(1, "NEC Extended Key =%08x", key);
 		if (d->rc_dev != NULL)
-			rc_keydown(d->rc_dev, key, 0);
+			rc_keydown(d->rc_dev, RC_TYPE_OTHER, key, 0);
 	}
 
 	mutex_unlock(&d->i2c_mutex);
