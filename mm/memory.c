@@ -2758,7 +2758,7 @@ reuse:
 			set_page_dirty_balance(dirty_page, page_mkwrite);
 			/* file_update_time outside page_lock */
 			if (vma->vm_file)
-				file_update_time(vma->vm_file);
+				vma_file_update_time(vma);
 		}
 		put_page(dirty_page);
 		if (page_mkwrite) {
@@ -3200,7 +3200,7 @@ static inline int check_stack_guard_page(struct vm_area_struct *vma, unsigned lo
 		if (prev && prev->vm_end == address)
 			return prev->vm_flags & VM_GROWSDOWN ? 0 : -ENOMEM;
 
-		expand_downwards(vma, address - PAGE_SIZE);
+		return expand_downwards(vma, address - PAGE_SIZE);
 	}
 	if ((vma->vm_flags & VM_GROWSUP) && address + PAGE_SIZE == vma->vm_end) {
 		struct vm_area_struct *next = vma->vm_next;
@@ -3209,7 +3209,7 @@ static inline int check_stack_guard_page(struct vm_area_struct *vma, unsigned lo
 		if (next && next->vm_start == address + PAGE_SIZE)
 			return next->vm_flags & VM_GROWSUP ? 0 : -ENOMEM;
 
-		expand_upwards(vma, address + PAGE_SIZE);
+		return expand_upwards(vma, address + PAGE_SIZE);
 	}
 	return 0;
 }
@@ -3465,7 +3465,7 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 
 		/* file_update_time outside page_lock */
 		if (vma->vm_file && !page_mkwrite)
-			file_update_time(vma->vm_file);
+			vma_file_update_time(vma);
 	} else {
 		unlock_page(vmf.page);
 		if (anon)
@@ -4088,7 +4088,7 @@ int generic_access_phys(struct vm_area_struct *vma, unsigned long addr,
 	if (follow_phys(vma, addr, write, &prot, &phys_addr))
 		return -EINVAL;
 
-	maddr = ioremap_prot(phys_addr, PAGE_SIZE, prot);
+	maddr = ioremap_prot(phys_addr, PAGE_ALIGN(len + offset), prot);
 	if (write)
 		memcpy_toio(maddr + offset, buf, len);
 	else
